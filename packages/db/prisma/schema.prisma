@@ -1,0 +1,90 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum DeploymentStatus {
+  QUEUED
+  CLONING
+  BUILDING
+  DEPLOYING
+  RUNNING
+  FAILED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  repositories Repository[]
+}
+
+model Repository {
+  id  String @id @default(uuid())
+  name String
+  url String
+  branch String @default("main")
+
+  userId String
+  user User @relation(fields: [userId], references: [id])
+
+  deployments Deployment[]
+
+  createdAt DateTime @default(now()) 
+  updatedAt DateTime @updatedAt
+}
+
+model Deployment {
+  id String @id @default(uuid())
+
+  repositoryId String
+  repository Repository @relation(fields: [repositoryId], references: [id])
+
+  status DeploymentStatus @default(QUEUED)
+
+  commitHash String?
+
+  logs DeploymentLog[]
+
+  container Container?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DeploymentLog {
+  id String @id @default(uuid())
+
+  deploymentId String
+  deployment Deployment @relation(fields:[deploymentId], references:[id], onDelete: Cascade)
+
+  message String
+  timestamp DateTime @default(now())
+}
+
+model Container {
+  id String @id @default(uuid())
+
+  deploymentId String @unique
+  deployment Deployment @relation(fields:[deploymentId], references:[id])
+
+  dockerId String
+  imageId String?
+
+  port Int?
+
+  status String
+
+  createdAt DateTime @default(now())
+}

@@ -12,6 +12,7 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@flowline/db": "*",
     "cookie-parser": "^1.4.7",
     "cores": "^0.8.5",
     "dotenv": "^17.4.2",
