@@ -13,10 +13,13 @@
   "type": "module",
   "dependencies": {
     "@flowline/db": "*",
+    "@flowline/shared": "*",
+    "bullmq": "^6.0.9",
     "cookie-parser": "^1.4.7",
     "cores": "^0.8.5",
     "dotenv": "^17.4.2",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "ioredis": "^6.0.0"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",
