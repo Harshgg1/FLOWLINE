@@ -1,4 +1,5 @@
 import Docker from "dockerode";
+import { createDockerContext } from "./docker.context";
 
 export const docker = new Docker();
 
@@ -11,15 +12,12 @@ export async function testDocker() {
 
 export async function buildImage(sourcePath: string, imageName: string) {
     console.log("Docker Image called");
-    const stream = await docker.buildImage( {
-        context: sourcePath,
-        src: [
-            "Dockerfile",
-            "package.json",
-            "package-lock.json",
-            "index.js"
-        ]
-    } ,{ t: imageName});
+
+    const context = createDockerContext(sourcePath);
+
+    const stream = await docker.buildImage( 
+        context,
+        { t: imageName});
     
 
     await new Promise((resolve, reject) => {
