@@ -3,6 +3,7 @@ import { connection } from "./connection.ts";
 import { DEPLOYMENT_QUEUE } from "@flowline/shared";
 import prisma from "@flowline/db";
 import { cloneRepository } from "../services/git.service.ts";
+import { buildImage } from "../services/docker.service.ts";
 
 export const deploymentWorker = new Worker(DEPLOYMENT_QUEUE,
         async Job => {
@@ -44,6 +45,15 @@ export const deploymentWorker = new Worker(DEPLOYMENT_QUEUE,
                     status: "BUILDING"
                 }
             });
+            const imageName = `flowline/${deployment.id}:latest`;
+
+            await buildImage(
+                sourcePath,
+                imageName
+            );
+
+            console.log("Image built:", imageName);
+            console.log("Docker build finished");
 
         },
         { connection}

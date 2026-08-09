@@ -8,7 +8,7 @@ import { REPOSITORY_ROOT } from "../config/path.ts";
 export async function cloneRepository(
     repositoryUrl: string,
     deploymentId: string
-) {
+): Promise<string> {
 
     const deploymentPath = path.join(
         REPOSITORY_ROOT,
@@ -32,7 +32,7 @@ export async function cloneRepository(
         console.error(data.toString());
     });
 
-    return new Promise((resolve, reject) => {
+    return new Promise<string>((resolve, reject) => {
         gitProcess.on("close", code => {
             if(code === 0) {resolve(sourcePath);}
             else { reject (new Error("Clone failed"));}
