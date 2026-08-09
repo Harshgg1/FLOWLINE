@@ -4,4 +4,4 @@ dist
 build
 .next
 coverage
-tmp
+tmp/

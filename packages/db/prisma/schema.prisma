@@ -47,6 +47,7 @@ model Repository {
 
 model Deployment {
   id String @id @default(uuid())
+  imageName String?
 
   repositoryId String
   repository Repository @relation(fields: [repositoryId], references: [id])

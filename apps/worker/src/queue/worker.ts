@@ -4,6 +4,7 @@ import { DEPLOYMENT_QUEUE } from "@flowline/shared";
 import prisma from "@flowline/db";
 import { cloneRepository } from "../services/git.service.ts";
 import { buildImage } from "../services/docker.service.ts";
+import { createContainer, startContainer } from "../services/container.service.ts";
 
 export const deploymentWorker = new Worker(DEPLOYMENT_QUEUE,
         async Job => {
@@ -54,6 +55,12 @@ export const deploymentWorker = new Worker(DEPLOYMENT_QUEUE,
 
             console.log("Image built:", imageName);
             console.log("Docker build finished");
+
+            const container = await createContainer(imageName);
+            console.log("Container created:", container.id);
+
+            await startContainer(container);
+            console.log("Container started");
 
         },
         { connection}
