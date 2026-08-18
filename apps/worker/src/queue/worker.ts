@@ -1,10 +1,10 @@
 import { Job, Worker } from "bullmq";
-import { connection } from "./connection.ts";
+import { connection } from "./connection";
 import { DEPLOYMENT_QUEUE } from "@flowline/shared";
 import prisma from "@flowline/db";
-import { cloneRepository } from "../services/git.service.ts";
-import { buildImage } from "../services/docker.service.ts";
-import { createContainer, startContainer } from "../services/container.service.ts";
+import { cloneRepository } from "../services/git.service";
+import { buildImage } from "../services/docker.service";
+import { createContainer, startContainer } from "../services/container.service";
 
 export const deploymentWorker = new Worker(DEPLOYMENT_QUEUE,
         async Job => {

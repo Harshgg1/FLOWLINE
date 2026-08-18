@@ -1,4 +1,4 @@
-import { docker } from "./docker.service.ts";
+import { docker } from "./docker.service";
 
 export async function createContainer(imageName:string){
     const container = await docker.createContainer({

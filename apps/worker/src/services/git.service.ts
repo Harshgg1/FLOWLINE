@@ -2,7 +2,7 @@ import { spawn } from "child_process";
 import fs from "fs/promises";
 import path from "path";
 
-import { REPOSITORY_ROOT } from "../config/path.ts";
+import { REPOSITORY_ROOT } from "../config/path";
 
 
 export async function cloneRepository(

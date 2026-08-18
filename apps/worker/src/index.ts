@@ -1,5 +1,5 @@
-import "./queue/worker.ts"
-import { testDocker } from "./services/docker.service.ts"
+import "./queue/worker"
+import { testDocker } from "./services/docker.service"
 
 testDocker();
 

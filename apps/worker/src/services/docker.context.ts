@@ -4,9 +4,7 @@ import tar from "tar-stream";
 
 
 export function createDockerContext(sourcePath:string){
-
     const pack = tar.pack();
-
 
     function addFolder(folder:string){
 
@@ -14,38 +12,28 @@ export function createDockerContext(sourcePath:string){
 
 
         for(const file of files){
-
             const fullPath = path.join(folder,file);
-
             const stat = fs.statSync(fullPath);
 
 
             if(stat.isDirectory()){
-
                 addFolder(fullPath);
-
             }
-            else{
 
+            else{
                 pack.entry(
                     {
                         name:path.relative(sourcePath,fullPath)
                     },
                     fs.readFileSync(fullPath)
                 );
-
             }
-
         }
-
     }
-
 
     addFolder(sourcePath);
 
-
     pack.finalize();
-
 
     return pack;
 }
