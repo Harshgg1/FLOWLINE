@@ -16,7 +16,7 @@ enum DeploymentStatus {
   QUEUED
   CLONING
   BUILDING
-  DEPLOYING
+  STARTING
   RUNNING
   FAILED
 }
@@ -47,17 +47,17 @@ model Repository {
 
 model Deployment {
   id String @id @default(uuid())
-  imageName String?
 
   repositoryId String
   repository Repository @relation(fields: [repositoryId], references: [id])
 
   status DeploymentStatus @default(QUEUED)
 
-  commitHash String?
+  imageName String?
+  containerId String?
+  port Int?
 
   logs DeploymentLog[]
-
   container Container?
 
   createdAt DateTime @default(now())

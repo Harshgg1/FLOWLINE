@@ -22,45 +22,93 @@ export const deploymentWorker = new Worker(DEPLOYMENT_QUEUE,
                 throw new Error("Deployment not found");
             }
 
-            await prisma.deployment.update({
-                where:{
-                    id:deployment.id
-                },
-                data:{
-                    status:"CLONING"
-                }
-            });
+            try {
+                    await prisma.deployment.update({
+                    where:{
+                        id:deployment.id
+                    },
+                    data:{
+                        status:"CLONING"
+                    }
+                });
 
-            const sourcePath = await cloneRepository(
-                deployment.repository.url,
-                deployment.id
+                const sourcePath = await cloneRepository(
+                    deployment.repository.url,
+                    deployment.id
+                );
+
+                console.log("Repository cloned at:", sourcePath);
+
+                await prisma.deployment.update({
+                    where: {
+                        id: deployment.id
+                    },
+                    data: {
+                        status: "BUILDING"
+                    }
+                });
+                const imageName = `flowline/${deployment.id}:latest`;
+
+                await buildImage(
+                    sourcePath,
+                    imageName
+                );
+
+                console.log("Image built:", imageName);
+                console.log("Docker build finished");
+
+                await prisma.deployment.update({
+                    where: {
+                        id: deployment.id
+                    },
+                    data: {
+                        status: "STARTING",
+                        imageName
+                    }
+                    });
+
+                const container = await createContainer(imageName);
+                console.log("Container created:", container.id);
+
+                await startContainer(container);
+                console.log("Container started");
+
+                await prisma.deployment.update({
+                    where: {
+                        id: deployment.id
+                    },
+                    data: {
+                        status: "RUNNING",
+                        containerId: container.id
+                    }
+                    });
+            }
+        catch (error) {
+    console.error(
+        `Deployment ${deployment.id} failed:`,
+        error
+    );
+
+    try {
+        await prisma.deployment.update({
+            where: {
+                id: deployment.id
+            },
+            data: {
+                status: "FAILED"
+            }
+        });
+        } 
+        catch (statusError) {
+            console.error(
+                "Failed to update deployment status:",
+                statusError
             );
+        }
 
-            console.log("Repository cloned at:", sourcePath);
+        throw error;
+    }
 
-            await prisma.deployment.update({
-                where: {
-                    id: deployment.id
-                },
-                data: {
-                    status: "BUILDING"
-                }
-            });
-            const imageName = `flowline/${deployment.id}:latest`;
-
-            await buildImage(
-                sourcePath,
-                imageName
-            );
-
-            console.log("Image built:", imageName);
-            console.log("Docker build finished");
-
-            const container = await createContainer(imageName);
-            console.log("Container created:", container.id);
-
-            await startContainer(container);
-            console.log("Container started");
 
         },
         { connection}
