@@ -51,7 +51,8 @@ export const deploymentWorker = new Worker(DEPLOYMENT_QUEUE,
 
                 await buildImage(
                     sourcePath,
-                    imageName
+                    imageName,
+                    deployment.id
                 );
 
                 console.log("Image built:", imageName);

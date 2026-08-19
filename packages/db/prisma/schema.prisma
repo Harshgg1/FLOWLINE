@@ -21,6 +21,12 @@ enum DeploymentStatus {
   FAILED
 }
 
+enum LogType {
+  INFO
+  ERROR
+  BUILD
+}
+
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
@@ -71,7 +77,8 @@ model DeploymentLog {
   deployment Deployment @relation(fields:[deploymentId], references:[id], onDelete: Cascade)
 
   message String
-  timestamp DateTime @default(now())
+  type LogType
+  createdAt DateTime @default(now())
 }
 
 model Container {

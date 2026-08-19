@@ -19,7 +19,9 @@
     "cores": "^0.8.5",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "ioredis": "^6.0.0"
+    "ioredis": "^6.0.0",
+    "redis": "^6.2.1",
+    "socket.io": "^4.8.3"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",
