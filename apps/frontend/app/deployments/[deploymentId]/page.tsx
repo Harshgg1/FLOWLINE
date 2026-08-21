@@ -23,22 +23,7 @@ export default function DeploymentPage({params,}: {params: Promise<{ deploymentI
       const { deploymentId } = await params;
 
       setDeploymentId(deploymentId);
-
-      // logs that already exist
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/deployments/${deploymentId}/logs`
-      );
-
-      if (!response.ok) {
-        console.error("Failed to fetch deployment logs");
-        return;
-      }
-
-      const historicalLogs: DeploymentLog[] =
-        await response.json();
-
-      setLogs(historicalLogs);
-
+      
       // new logs
       socket = io(
         process.env.NEXT_PUBLIC_BACKEND_URL!
@@ -56,10 +41,12 @@ export default function DeploymentPage({params,}: {params: Promise<{ deploymentI
       socket.on("deployment-log",(log: DeploymentLog) => {
           console.log("New log:", log);
 
-          setLogs((current) => [
-            ...current,
-            log,
-          ]);
+          setLogs((current) => {
+            if (log.id && current.some((existing) => existing.id === log.id)) {
+              return current;
+            }
+            return [...current, log];
+          });
         }
       );
 
@@ -69,6 +56,37 @@ export default function DeploymentPage({params,}: {params: Promise<{ deploymentI
           error
         );
       });
+
+      // logs that already exist
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/deployments/${deploymentId}/logs`
+      );
+
+      if (!response.ok) {
+        console.error("Failed to fetch deployment logs");
+        return;
+      }
+
+      const historicalLogs: DeploymentLog[] =
+        await response.json();
+
+      setLogs((current) => {
+          const combined = [
+              ...historicalLogs,
+              ...current
+          ];
+
+          const unique = new Map(
+              combined.map((log) => [log.id, log])
+          );
+
+          return Array.from(unique.values()).sort(
+              (a, b) =>
+                  new Date(a.createdAt!).getTime() -
+                  new Date(b.createdAt!).getTime()
+          );
+      });
+
     }
 
     setup();
