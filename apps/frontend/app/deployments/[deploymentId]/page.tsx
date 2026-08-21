@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 
 type DeploymentLog = {
@@ -11,13 +11,26 @@ type DeploymentLog = {
 };
 
 export default function DeploymentPage({params}: {params: Promise<{ deploymentId: string }>}) {
+  
+  const [logs, setLogs] = useState<DeploymentLog[]>([]);
+  
+  
   useEffect(() => {
     let socket: ReturnType<typeof io> | null = null;
     let cancelled = false;
-
+    
     async function setup() {
-        const { deploymentId } = await params;
+      const { deploymentId } = await params;
+      console.log("BACKEND URL:", process.env.NEXT_PUBLIC_BACKEND_URL);
 
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/deployments/${deploymentId}/logs`
+      );
+      
+      const historicalLogs = await response.json();
+      setLogs(historicalLogs);
+
+      
         if (cancelled) return;
 
         socket = io(process.env.NEXT_PUBLIC_BACKEND_URL!, {
@@ -32,6 +45,10 @@ export default function DeploymentPage({params}: {params: Promise<{ deploymentId
 
         socket.on("deployment-log", (log: DeploymentLog) => {
             console.log("LIVE DEPLOYMENT LOG:", log);
+            setLogs((currentLogs) => [
+              ...currentLogs, 
+              log
+            ])
         });
 
         socket.on("disconnect", () => {

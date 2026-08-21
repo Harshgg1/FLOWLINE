@@ -71,14 +71,17 @@ model Deployment {
 }
 
 model DeploymentLog {
-  id String @id @default(uuid())
+  id           String     @id @default(uuid())
 
   deploymentId String
-  deployment Deployment @relation(fields:[deploymentId], references:[id], onDelete: Cascade)
+  deployment   Deployment @relation(fields: [deploymentId],references: [id],onDelete: Cascade)
 
-  message String
-  type LogType
-  createdAt DateTime @default(now())
+  message      String
+  type         String
+
+  createdAt    DateTime   @default(now())
+
+  @@index([deploymentId, createdAt])
 }
 
 model Container {
