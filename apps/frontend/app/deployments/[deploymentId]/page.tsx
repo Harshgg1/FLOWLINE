@@ -1,83 +1,125 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { io } from "socket.io-client";
+import { io, Socket } from "socket.io-client";
 
 type DeploymentLog = {
+  id?: string;
   deploymentId: string;
   message: string;
   type: "INFO" | "BUILD" | "ERROR";
-  timestamp: number;
+  createdAt?: string;
+  timestamp?: number;
 };
 
-export default function DeploymentPage({params}: {params: Promise<{ deploymentId: string }>}) {
-  
+export default function DeploymentPage({params,}: {params: Promise<{ deploymentId: string }>;}) {
+  const [deploymentId, setDeploymentId] = useState("");
   const [logs, setLogs] = useState<DeploymentLog[]>([]);
-  
-  
+
   useEffect(() => {
-    let socket: ReturnType<typeof io> | null = null;
-    let cancelled = false;
-    
+    let socket: Socket | null = null;
+
     async function setup() {
       const { deploymentId } = await params;
-      console.log("BACKEND URL:", process.env.NEXT_PUBLIC_BACKEND_URL);
 
+      setDeploymentId(deploymentId);
+
+      // logs that already exist
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/deployments/${deploymentId}/logs`
       );
-      
-      const historicalLogs = await response.json();
+
+      if (!response.ok) {
+        console.error("Failed to fetch deployment logs");
+        return;
+      }
+
+      const historicalLogs: DeploymentLog[] =
+        await response.json();
+
       setLogs(historicalLogs);
 
-      
-        if (cancelled) return;
+      // new logs
+      socket = io(
+        process.env.NEXT_PUBLIC_BACKEND_URL!
+      );
 
-        socket = io(process.env.NEXT_PUBLIC_BACKEND_URL!, {
-            withCredentials: true,
-        });
+      socket.on("connect", () => {
+        console.log("Socket connected:", socket?.id);
 
-        socket.on("connect", () => {
-            console.log("Socket connected:", socket?.id);
+        socket?.emit(
+          "join-deployment",
+          deploymentId
+        );
+      });
 
-            socket?.emit("join-deployment", deploymentId);
-        });
+      socket.on("deployment-log",(log: DeploymentLog) => {
+          console.log("New log:", log);
 
-        socket.on("deployment-log", (log: DeploymentLog) => {
-            console.log("LIVE DEPLOYMENT LOG:", log);
-            setLogs((currentLogs) => [
-              ...currentLogs, 
-              log
-            ])
-        });
+          setLogs((current) => [
+            ...current,
+            log,
+          ]);
+        }
+      );
 
-        socket.on("disconnect", () => {
-            console.log("Socket disconnected");
-        });
-
-        socket.on("connect_error", (error) => {
-            console.error("Socket connection error:", error);
-        });
+      socket.on("connect_error", (error) => {
+        console.error(
+          "Socket error:",
+          error
+        );
+      });
     }
 
     setup();
 
     return () => {
-        cancelled = true;
-        socket?.disconnect();
-        socket = null;
+      socket?.disconnect();
     };
-}, [params]);
+  }, [params]);
 
   return (
-    <main className="p-8">
-      <h1 className="text-2xl font-bold">
-        Flowline Deployment
+    <main className="min-h-screen bg-black p-8 text-white">
+      <h1 className="mb-6 text-2xl font-bold">
+        Deployment
       </h1>
 
-      <p className="mt-2">
-        Open the browser console to see live logs.
+      <p className="mb-4 text-sm text-gray-400">
+        {deploymentId}
       </p>
+
+      <div className="rounded-lg bg-zinc-950 p-5 font-mono text-sm">
+        {logs.length === 0 ? (
+          <p className="text-gray-500">
+            No logs yet...
+          </p>
+        ) : (
+          logs.map((log, index) => (
+            <div
+              key={log.id ?? `${log.timestamp}-${index}`}
+              className="mb-1"
+            >
+              <span className="mr-3 text-gray-500">
+                {log.createdAt
+                  ? new Date(
+                      log.createdAt
+                    ).toLocaleTimeString()
+                  : ""}
+              </span>
+
+              <span
+                className={
+                  log.type === "ERROR"
+                    ? "text-red-400"
+                    : "text-green-400"
+                }
+              >
+                {log.message}
+              </span>
+            </div>
+          ))
+        )}
+      </div>
     </main>
   );
 }
